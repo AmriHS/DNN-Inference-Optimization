@@ -2,7 +2,7 @@ https://elinux.org/Jetson/TX1_Power_Monitor
 
 
 for example if you want to read power you will use: 
-cat /sys/devices/platform/7000c400.i2c/i2c-1/1-0040/iio_device/in_power0_input
+cat /sys/devices/7000c400.i2c/i2c-1/1-0040/iio_device/in_power0_input
 
 1923...
 
