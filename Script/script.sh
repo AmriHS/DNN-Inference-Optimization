@@ -10,7 +10,7 @@ sh ./cpu_freq.sh ${DISABLE_CORE_ARRAY[4]} ${CPU_FREQ_ARRAY[1]}
 sh ./gpu_freq.sh ${GPU_FREQ_ARRAY[1]}
 sh ./emc_freq.sh ${EMC_FREQ_ARRAY[1]}
 
-#python run_benchmark.py --batch_size 32 --all_mem_gr 0 mem_fr_per_gpu 0.25
+python run_benchmark.py --bsize 32 --all_growth 1 --mem_frac 0.25
 
 # verify configuration
 cur_gpu_freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
