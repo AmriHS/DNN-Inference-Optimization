@@ -1,0 +1,19 @@
+1. For Image:
+- Object Detection:
+https://github.com/matterport/Mask_RCNN
+https://github.com/experiencor/keras-yolo2
+https://github.com/michalgdak/car-recognition
+
+- Facial Recognition and Regeneration
+https://github.com/dezmoanded/vrn-torch-to-keras
+
+- Segmentation
+https://github.com/bonlime/keras-deeplab-v3-plus
+
+- Miscellaneous
+https://github.com/boluoyu/ImageCaption
+
+2. For Text
+https://github.com/buriburisuri/speech-to-text-wavenet
+https://github.com/mozilla/DeepSpeech
+https://github.com/baidu-research/warp-ctc
