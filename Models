@@ -1,0 +1,6 @@
+1. object detection:
+https://github.com/matterport/Mask_RCNN
+2. Unsupervised Image to Image Translation:
+https://github.com/bonlime/keras-deeplab-v3-plus
+3. Photo-Realistic
+https://github.com/tensorlayer/srgan
