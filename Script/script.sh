@@ -1,14 +1,12 @@
 # possible configuration space
-BATCH_SIZE_ARRAY=(1 8 16 32)
-ALL_MEM_GROWTH_ARRAY=([1]=0.1 [1]=0.15 [2]=0.25 [3]=0.33)
-GPU_FREQ_ARRAY=([1]=76800000 [2]=537600000 [3]=998400000)
-CPU_FREQ_ARRAY=([1]=102000 [2]=918000 [3]=1734000)
-EMC_FREQ_ARRAY=([1]=12750000 [2]=800000000 [3]=1600000000)
-DISABLE_CORE_ARRAY=([1]=0 [2]=1 [3]=2 [4]=3)
+$CPU_FREQ = $1
+$CPU_DIS_CORES = $2
+$GPU_FREQ = $3
+$EMC_FREQ = $4
 
-sh ./cpu_freq.sh ${DISABLE_CORE_ARRAY[4]} ${CPU_FREQ_ARRAY[1]}
-sh ./gpu_freq.sh ${GPU_FREQ_ARRAY[1]}
-sh ./emc_freq.sh ${EMC_FREQ_ARRAY[1]}
+sh ./cpu_freq.sh $CPU_FREQ $CPU_DIS_CORES
+sh ./gpu_freq.sh $GPU_FREQ
+sh ./emc_freq.sh $EMC_FREQ
 
 python run_benchmark.py --bsize 32 --all_growth 1 --mem_frac 0.25
 
