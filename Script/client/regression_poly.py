@@ -11,7 +11,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 
 
-def test_multi_target_regression(data_x, data_y):
+def test_multi_target_regression_poly(data_x, data_y):
     print(len(data_x))
     n_train = int (len(data_x)*0.80)
     X_train, Y_train = data_x[:n_train], data_y[:n_train]
@@ -43,7 +43,7 @@ def test_multi_target_regression(data_x, data_y):
     Y_train_pred = lg.predict(X_train)
     Y_test_pred = lg.predict(X_test_)
     "" """"
-        Y_train_pred = rgr.predict(X_train)
+        Y_train_pred = rgr.predict(X_)
         Y_test_pred = rgr.predict(X_test)
     "" """[2]
 
@@ -64,7 +64,7 @@ def test_multi_target_regression(data_x, data_y):
     print('Test RMSE for Power Consumption: %.3f' % rmse_power)
 
 
-def test_multi_target_regression_poly(data_x, data_y):
+def test_multi_target_regression(data_x, data_y):
     print(len(data_x))
     n_train = int (len(data_x)*0.80)
     X_train, Y_train = data_x[:n_train], data_y[:n_train]
