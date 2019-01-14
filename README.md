@@ -1,4 +1,4 @@
-# DNN-Inference-Optimization
+# DNN Inference Optimization
 The goal of this project are:
 - Exploring the configuration space from hardware, compilar, environment-level parameters for Machine Learning algorithem, Deep Neural Network.
 - How changing in parameters influence the inference time and power consumption of Deep Neural Network. 
