@@ -9,6 +9,8 @@ import time
 import csv
 from gpflowopt.acquisition import ExpectedImprovement
 from random import randint
+
+# set seed for random value
 random.seed(24)
 
 # host IP and credential
@@ -20,9 +22,8 @@ password='ubuntu'
 #Linux commands
 file_dir = 'cd DNN_Inference;'
 sudo_cmd = 'sudo -S '
-command='python run_bench_v2.py --cpu_freq {0} --num_cores {1} --gpu_freq {2} --emc_freq {3} --bsize {4}' \
+command='python run_benchmark.py --cpu_freq {0} --num_cores {1} --gpu_freq {2} --emc_freq {3} --bsize {4}' \
     +' --all_growth {5} --mem_frac {6}'
-command2='python DNN_Inference/ssh_ex.py'
 
 # define discrete values of each input space
 batch_size_array=[1, 8, 16, 32] # 16 & 32 is excluded for VGG16
@@ -46,8 +47,6 @@ domain = gpflowopt.domain.ContinuousParameter('CPU_frequency', 102000, 1734000) 
          gpflowopt.domain.ContinuousParameter('Allow_growth', 0, 1) + \
          gpflowopt.domain.ContinuousParameter('Memory_fraction', 0.15, 0.33)
 
-is_sampling = True
-
 # connect to linux server using ssh
 ssh=paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -57,8 +56,6 @@ ssh.connect(ip,port,username,password)
 def write_to_csv(data, filename):
     with open(filename,'a') as out:
         csv_out= csv.writer(out, lineterminator='\n')
-        #csv_out.writerow(['CPU Frequency', '# of enabled cores','GPU Frequency','EMC Frequency','Batch Size', 'Mem Growth',
-        #                  'Mem Fraction', 'Runtime', 'Model Cons','GPU Cons', 'CPU Cons'])
         for row in data:
             csv_out.writerow(row)
 
@@ -85,24 +82,28 @@ def objective_func(params):
     y2 = []
     benchmark_data = []
     for i in range(len(params)):
-        print ("Iteration:"+str(i))
+        # find closest discrete value
         find_closest(params[i])
-        print (params[i,1])
+
+        # formatting linux command
         cmd = command.format(int(params[i,0]), int(params[i,1]),int(params[i,2]),int(params[i,3]),int(params[i,4]),
                              int(params[i,5]),float(params[i,6]))
         print ("Command:"+repr(cmd))
+
+        # SSH requests
         stdin,stdout,stderr=ssh.exec_command(file_dir+sudo_cmd+cmd)
         stdin.write("ubuntu\n")
         stdin.flush()
         outlines=stdout.readlines()
         response=''.join(outlines).split()
         response = handle_output(response)
-        print (response)
         benchmark_data.append([params[i,0], params[i,1], params[i,2], params[i,3], params[i,4], params[i,5],
                          params[i,6], response[0], response[1], response[2], response[3]])
         y1.append([response[0]])
         y2.append([response[1]])
     write_to_csv(benchmark_data, "result.csv")
+
+    # return objective values
     return np.hstack((y1,y2))
 
 def random_search():
@@ -119,8 +120,6 @@ def random_search():
     plt.xlabel('Inference Time')
     plt.ylabel('Power Consumption')
     plt.show()
-
-    print (Y.shape[0])
 
     plt.plot(np.arange(0, Y.shape[0]),np.minimum.accumulate(Y[:,0]) ,'b',label='Inference Time')
     plt.ylabel('fmin')
@@ -147,7 +146,7 @@ def baysian_opt():
     X = np.delete(X, (itemindex[0]), axis=0)
     Y = np.array(Y, dtype=float)
     n_samples = len(X)
-    is_sampling = False
+
     # One model for each objective
     objective_models = [gpflow.gpr.GPR(X.copy(), Y[:,[i]].copy(), gpflow.kernels.Matern52(domain.size, ARD=True)) for i in range(Y.shape[1])]
     for model in objective_models:
@@ -180,5 +179,7 @@ def baysian_opt():
     plt.xlabel('Number of evaluated points')
     plt.legend()
     plt.show()
+
+# run Bayesian Optimization and Random Design
 baysian_opt()
 random_search()

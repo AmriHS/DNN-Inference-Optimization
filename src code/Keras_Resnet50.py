@@ -1,14 +1,21 @@
-# An example using Keras Resnet50 pre-trained model to measure the inference time
+# import packages
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import datetime
 import time
 import os
-from apscheduler.schedulers.background import BackgroundScheduler
-#import apscheduler.schedulers.blocking
 import commands
+import keras.backend.tensorflow_backend as ktf
+import tensorflow as tf
+import numpy as np
+import cv2
+import csv
+import gc
+import subprocess
+import logging
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from keras.applications.resnet50 import ResNet50
 from keras.preprocessing import image
 from keras.applications.resnet50 import preprocess_input, decode_predictions
@@ -16,33 +23,17 @@ from timeit import default_timer as timer
 from keras.datasets import cifar10
 from multiprocessing import Process, Queue
 
-import keras.backend.tensorflow_backend as ktf
-import tensorflow as tf
-import numpy as np
-import cv2 #, os
-import csv
-import gc 
+
 
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
-import subprocess
-
-import logging
-
-#log = logging.getLogger('apscheduler.executors.default')
-#log.setLevel(logging.INFO)  # DEBUG
-
-#fmt = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-#h = logging.StreamHandler()
-#h.setFormatter(fmt)
-#log.addHandler(h)
-
-
 logger = logging.getLogger()  # this returns the root logger
 logger.addHandler(logging.StreamHandler())
-Time = []
+
+# global variable to store power consumption consumed by various threads
 power_cons = []
 
+# Read power consumption by a separate thread every 0.5 second
 def tick(): 
     # Read current power consumptions
     input0 = open('/sys/devices/7000c400.i2c/i2c-1/1-0040/iio_device/in_power0_input', 'r')
@@ -52,21 +43,13 @@ def tick():
     gpu_power = input1.readline()
     cpu_power = input2.readline()
     power_cons.append([float(mod_power), float(gpu_power), float(cpu_power)])
-    CurrentTime = time.time()
-    Time.append(int(CurrentTime))
-    #print('Tick! The time is: %s' % datetime.now())
 
-def RelationPlot(Time):
-    #plt.plot(Time, PowerConsumption)
-    #plt.xlabel('Time')
-    #plt.ylabel('PowerConsumption')
-    #plt.savefig("PowerConsumption_test_timer.jpg")
+def calculate_power():
     len_power=len(power_cons)
     mod_power_sum = 0
     gpu_power_sum = 0
     cpu_power_sum = 0
     for i in range(len_power):
-        #print("Current Power Consumption:"+repr(power_cons[i]))
         mod_power_sum+=power_cons[i][0]
         gpu_power_sum+=power_cons[i][1]
         cpu_power_sum+=power_cons[i][2]
@@ -87,21 +70,14 @@ def resize(dataset):
     for i in range(len(dataset)):
         x = cv2.resize(dataset[i], (224,224))
         x = image.img_to_array(x)
-        #x = np.expand_dims(x, axis=0)
         processed_data.append(preprocess_input(x))
     return processed_data
 
 
 def make_predictions(dataset, batch_size, allow_growth, memory_frac):
-    #print('getting into models!')
-    # reset values of power consumption
-    power_cons = []
-
     scheduler = BackgroundScheduler()
-    #scheduler = apscheduler.schedulers.blocking.BackgroundScheduler('apscheduler.job_defaults.max_instances': '2')
-    #print('BackgroundScheduler define')
-    scheduler.add_job(tick, 'interval', seconds=0.5, misfire_grace_time=1)# execute every 0.5 second
-    #print('job added!')
+    scheduler.add_job(tick, 'interval', seconds=0.5, misfire_grace_time=1) #execute every 0.5 second
+
     config = tf.ConfigProto(log_device_placement=False, device_count = {'GPU' :1})
     if allow_growth:
         config.gpu_options.allow_growth = True
@@ -112,37 +88,30 @@ def make_predictions(dataset, batch_size, allow_growth, memory_frac):
     ktf.set_session(session)
 
     model = ResNet50(weights='imagenet')
-    # start time
     try:
-        scheduler.start()# new seperate thread
-        #print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
+        scheduler.start() # new thread
         start = timer()
         preds = model.predict(np.array(dataset), batch_size=batch_size)
-        # end time
         end = timer()
     except (KeyboardInterrupt, SystemExit):
-        # Not strictly necessary if daemonic mode is enabled but should be done if possible
         scheduler.shutdown()
+
     scheduler.shutdown()
-    #ktf.clear_session()
     session.close()
     del session
+    #force Garbage collector to remove session
     gc.collect()
-    power_cons = RelationPlot(Time)
+    power_cons = calculate_power()
+
     # calculate runtime
     runtime = end-start
-    #print('Runtime: ' + "{0:.2f}".format(runtime) + 's')
     return preds, runtime, power_cons
 
 def run_resnet50_benchmark(dataset, batch_size, all_growth=True, mem_frac=None):
-    os.environ["CUDA_VISIBLE_DEVICES"]="0"   
     preds, runtime, power_cons = make_predictions(dataset[:100], batch_size, all_growth, mem_frac)
     decoded =  decode_predictions(preds, top=1)
     write_to_csv(decoded, "Keras_result.csv")
-    #data = [runtime, power_cons[0],power_cons[1], power_cons[2]]
-    return runtime, power_cons 
-    #for i in range(len(data)):
-    #	q.put(data[i])
+    return runtime, power_cons
 
 
 

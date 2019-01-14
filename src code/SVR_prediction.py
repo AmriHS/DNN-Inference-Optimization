@@ -1,7 +1,5 @@
-from sklearn.datasets import make_regression
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.svm import SVR
 from sklearn.pipeline import Pipeline
 import numpy as np
 import pandas as pd
@@ -9,42 +7,42 @@ from math import sqrt
 from sklearn.metrics import mean_squared_error
 from matplotlib import pyplot
 import matplotlib.pyplot as plt
-from sklearn import cross_validation
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 
 def polynomial(data_x, data_y, split, init_degree=2, max_degree = 2):
-    #data_x = np.array(data_x, dtype="float64")
-    #data_y = np.array(data_y, dtype="float64")
-    #data_y = np.round(data_y, decimals=1)
-
     X_train, Y_train = data_x[:split], data_y[:split]
     X_test, Y_test = data_x[split:], data_y[split:]
 
-    degrees = np.arange(init_degree,max_degree+1)
+    # explore various polynomial function degree
     pred = []
+    degrees = np.arange(init_degree,max_degree+1)
     for i in range(len(degrees)):
         model = Pipeline([
             ('poly', PolynomialFeatures(degree=degrees[i])),
             ('linreg', LinearRegression(normalize=True))
         ])
+
+        # fit the model and predict both train and test dataset
         model.fit(X_train, Y_train)
         Y_train_pred = model.predict(X_train)
         Y_test_pred = model.predict(X_test)
         pred.append(Y_test_pred)
 
+        # read intercept and coefficient values
         intercept = model.named_steps['linreg'].intercept_[0]
         coef = model.named_steps['linreg'].coef_[0]
         features = model.named_steps['poly'].get_feature_names()
+
+        # assert that they are equal
         assert(len(coef) == len(features))
 
+        # map coefficient to polynomial function
         estimated_inf_f = '{:+.2f}'.format(intercept)
-
         for j in range(0, len(coef)-1):
             if float ('{:+.1f}'.format(coef[j]).replace('\U00002013', '-')) != 0.0:
                 estimated_inf_f += ' + {:+.1f} {}'.format(np.round(coef[j], decimals=2), features[j+1])
 
-        print (estimated_inf_f)
         # plot function we want to learn
         rmse_infer = sqrt(mean_squared_error(Y_test_pred[:,0], Y_test[:,0]))
         rmse_power = sqrt(mean_squared_error(Y_test_pred[:,1], Y_test[:,1]))
@@ -104,7 +102,7 @@ def plot_result(Y_train,Y_test, Y_train_pred, Y_test_pred):
     pyplot.legend(loc='best')
     pyplot.show()
 
-dir_path = 'C:/Users/hcaro/Google Drive/Fall 2018/MLS/Project/DNN_Inference/Experiment Result'
+dir_path = 'C:/Path_to/Experiment Result'
 bays_dataset = pd.read_csv(dir_path+'/Bays_VDD_40.csv')
 rand_dataset = pd.read_csv(dir_path+'/Random_vgg_40.csv') #
 
@@ -122,11 +120,7 @@ bays_data_x, bays_data_y = bays_dataset[:,:-2], bays_dataset[:,-2:]
 rand_data_x, rand_data_y = rand_dataset[:,:-2], rand_dataset[:,-2:]
 
 test_multi_target_regression(bays_data_x, bays_data_y)
-#print ("---------------------------------------------")
 test_multi_target_regression(rand_data_x, rand_data_y)
-
-
-#print ("#########################")
 
 sequence_arr = np.arange(1,len(bays_data_x)+1).reshape(len(bays_data_x),1)
 n_train = int (len(bays_data_x)*0.8)
@@ -149,5 +143,5 @@ for i in range(len(pred_list)):
 pyplot.legend(loc='best')
 pyplot.show()
 
-
+# plot minimum values explored along iteration
 plot_min_iteration(bays_data_y, rand_data_y)

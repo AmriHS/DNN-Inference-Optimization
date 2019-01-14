@@ -1,7 +1,4 @@
-import tensorflow as tf
 import argparse
-import keras
-import json
 import os
 import cv2
 import Keras_Resnet50 as res50
@@ -28,6 +25,7 @@ all_growth = True
 batch_size = 1
 mem_frac_per_GPU = None
 
+# read command arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--cpu_freq', help='Allow memory growth for GPU during the runtime')
 parser.add_argument('--num_cores', help='Allow memory growth for GPU during the runtime')
@@ -37,9 +35,6 @@ parser.add_argument('--all_growth', help='Allow memory growth for GPU during the
 parser.add_argument('--mem_frac', help='Set a fixed value for memory fraction per GPU')
 parser.add_argument('--bsize', help='Set sample batch size for prediction')
 args = parser.parse_args()
-
-#if args.all_growth == 1 and args.mem_frac > 0:
-#	raise ValueError('Either all_growth or mem_frac args should be specificed. Not both')
 
 cpu_freq = int(args.cpu_freq)
 num_cores = int(args.num_cores)
@@ -52,6 +47,7 @@ if args.mem_frac:
 	all_growth = False
 elif args.all_growth:
 	all_growth = True
+
 #Benchmark runtime data
 benchmark_data = []
 
