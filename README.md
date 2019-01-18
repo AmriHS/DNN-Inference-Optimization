@@ -8,7 +8,8 @@
 - Prediction using Gradiant-boosting regression.
 
 ## Result:
-pending
+![alt text](/result/40_samples.png)
+
 
 Written using:
 - Python both 3.6 and 2.7
